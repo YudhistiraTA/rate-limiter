@@ -31,7 +31,7 @@ This rate limiter is meant to be used as a reverse proxy layer, similar to a gat
 
 ![image](https://bytebytego.com/_next/image?url=%2Fimages%2Fcourses%2Fsystem-design-interview%2Fdesign-a-rate-limiter%2Ffigure-4-3-KLFLUVLJ.png&w=1080&q=75)
 
-Amusingly, the bulk of the business logic is written in Lua inside of `tokenbucket.lua` because this service relies on Redis's atomicity instead of trying to wrangle mutexes and threads manually. This ensures that the service rate limiter service can be autoscaled horizontally on high traffic and does not ironically need to have a rate limiter itself.
+Amusingly, the bulk of the business logic is written in Lua inside of `tokenbucket.lua` because this service relies on Redis's atomicity instead of trying to wrangle mutexes and threads manually. This ensures that the rate limiter service can be autoscaled horizontally on high traffic and does not ironically need to have a rate limiter itself.
 
 The Go code is actually just a convenient wrapper for the Redis client. The Lua script is embedded into the built binary for easy deployment and zero IO interrupt for disk read on runtime.
 
