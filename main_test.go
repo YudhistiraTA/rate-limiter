@@ -172,6 +172,39 @@ func TestCreateHandler_DefaultIdentifier(t *testing.T) {
 	assert.Equal(t, "OK", w.Body.String())
 }
 
+func TestCreateHandler_InvalidRemoteAddr(t *testing.T) {
+	mr, err := miniredis.Run()
+	require.NoError(t, err)
+	defer mr.Close()
+
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	}))
+	defer target.Close()
+	targetURL, err := url.Parse(target.URL)
+	require.NoError(t, err)
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+
+	cap := 1
+	refill := 1
+	ttl := 60
+	identifierType := "IP"
+	apiKeyHeader := ""
+
+	handler := createHandler(rdb, proxy, cap, refill, ttl, identifierType, apiKeyHeader, tokenBucketScript)
+
+	// Test invalid RemoteAddr
+	req := httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "invalid-addr"
+	w := httptest.NewRecorder()
+	handler(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "Invalid remote address")
+}
+
 func TestCreateHandler_ScriptError(t *testing.T) {
 	mr, err := miniredis.Run()
 	require.NoError(t, err)
