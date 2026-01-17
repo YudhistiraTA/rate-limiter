@@ -13,7 +13,7 @@ The docker-compose file will run the rate limiter as a reverse proxy layer and t
 
 The example backend's `/v1/health` will return the caller's IP address.
 
-Use the following bash script to test the rate limiter. By default, the rate limiter should have a 5 request capacity with a refill rate of 1 request/second, so the following script must fail from the 6th request, and then work again after the user has waited for at least 5 seconds.
+Use the following bash script to test the rate limiter. By default, the rate limiter should have a 5 request capacity with a refill rate of 1 request/second, so the following script must fail from the 6th request, and then work again after the user has waited for at least 1 second.
 
 ```bash
 for i in {1..11}; do           
