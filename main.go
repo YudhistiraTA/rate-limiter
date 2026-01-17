@@ -116,6 +116,10 @@ func createHandler(rdb *redis.Client, proxy *httputil.ReverseProxy, cap, refill,
 		var identifier string
 		if identifierType == "API_KEY" {
 			identifier = r.Header.Get(apiKeyHeader)
+			if identifier == "" {
+				http.Error(w, "Missing API Key", http.StatusUnauthorized)
+				return
+			}
 		} else {
 			host, _, err := net.SplitHostPort(r.RemoteAddr)
 			if err != nil {

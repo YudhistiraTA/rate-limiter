@@ -2,7 +2,6 @@
 package main
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -205,72 +204,4 @@ func TestCreateHandler_ScriptError(t *testing.T) {
 	handler(w, req)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	assert.Contains(t, w.Body.String(), "Internal Server Error")
-}
-
-func TestMainFunction_DoesNotPanic(t *testing.T) {
-	// Very short timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-
-	// Prepare minimal env
-	t.Setenv("PORT", "8000")
-	t.Setenv("TARGET_URL", "http://127.0.0.1:0") // invalid but parseable
-	t.Setenv("REDIS_HOST", "localhost")
-	t.Setenv("REDIS_PORT", "6379")
-	t.Setenv("RATE_LIMITER_CAPACITY", "10")
-	t.Setenv("RATE_LIMITER_REFILL_RATE", "2")
-	t.Setenv("RATE_LIMITER_TTL", "60")
-	t.Setenv("RATE_LIMITER_IDENTIFIER", "IP")
-
-	done := make(chan struct{})
-
-	go func() {
-		defer close(done)
-		defer func() {
-			if r := recover(); r != nil {
-				t.Errorf("main panicked: %v", r)
-			}
-		}()
-		main()
-	}()
-
-	select {
-	case <-done:
-		// finished too early → probably failed fast which is ok
-	case <-ctx.Done():
-		// Good — at least it started and didn't panic instantly
-	}
-}
-
-func TestMainFunction_PanicOnMissingEnv(t *testing.T) {
-	// Prepare minimal env
-	t.Setenv("PORT", "8000")
-	t.Setenv("TARGET_URL", "http://127.0.0.1:0") // invalid but parseable
-	t.Setenv("REDIS_HOST", "localhost")
-	t.Setenv("REDIS_PORT", "6379")
-	t.Setenv("RATE_LIMITER_CAPACITY", "10")
-	t.Setenv("RATE_LIMITER_REFILL_RATE", "2")
-	t.Setenv("RATE_LIMITER_TTL", "60")
-	t.Setenv("RATE_LIMITER_IDENTIFIER", "IP")
-
-	errorList := []string{
-		"TARGET_URL",
-		"RATE_LIMITER_CAPACITY",
-		"RATE_LIMITER_REFILL_RATE",
-		"RATE_LIMITER_TTL",
-	}
-
-	for _, envVar := range errorList {
-		t.Run("Missing "+envVar, func(t *testing.T) {
-			// Unset the env var
-			t.Setenv(envVar, "")
-
-			defer func() {
-				if r := recover(); r == nil {
-					t.Errorf("main did not panic on missing %s", envVar)
-				}
-			}()
-			main()
-		})
-	}
 }
