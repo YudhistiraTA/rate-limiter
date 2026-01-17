@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+
+  ratelimiter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rate-limiter:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Required
+      - TARGET_URL=http://backend:8000
+      - RATE_LIMITER_CAPACITY=100
+      - RATE_LIMITER_REFILL_RATE=10
+      - RATE_LIMITER_TTL=60
+      # Optional / with defaults
+      - PORT=8080
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # - REDIS_PASSWORD=supersecret
+      - RATE_LIMITER_IDENTIFIER=IP           # or API_KEY
+      # - API_KEY_HEADER=X-API-Key
+    depends_on:
+      - redis
+      - backend
+
+  backend:
+    build:
+      context: ./example
+      dockerfile: Dockerfile
+    environment:
+      - PORT=8000
+    image: test-backend:latest
+    ports:
+      - "8000:8000"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis-data:/data
+    expose:
+      - "6379"
+
+volumes:
+  redis-data:
