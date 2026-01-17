@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -113,18 +114,15 @@ func createHandler(rdb *redis.Client, proxy *httputil.ReverseProxy, cap, refill,
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Define identifier based on configuration
 		var identifier string
-		switch identifierType {
-		case "IP":
-			identifier = r.RemoteAddr
-		case "API_KEY":
+		if identifierType == "API_KEY" {
 			identifier = r.Header.Get(apiKeyHeader)
-			if identifier == "" {
-				http.Error(w, "Missing API Key", http.StatusUnauthorized)
+		} else {
+			host, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				http.Error(w, "Invalid remote address", http.StatusBadRequest)
 				return
 			}
-		default:
-			// Default to IP if not configured properly
-			identifier = r.RemoteAddr
+			identifier = host
 		}
 
 		// Execute Lua script for token bucket algorithm
