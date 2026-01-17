@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -14,10 +13,12 @@ func main() {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/health", func(w http.ResponseWriter, r *http.Request) {
-		forwardedForStr := fmt.Sprintf("x-forwarded-for: %s", r.Header.Get("x-forwarded-for"))
-		ip := fmt.Sprintf("ip: %s", r.RemoteAddr)
+		ip := r.Header.Get("x-forwarded-for")
+		if ip == "" {
+			ip = r.RemoteAddr
+		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(forwardedForStr + "\n" + ip + "\n"))
+		w.Write([]byte(ip + "\n"))
 	})
 	handler := mux
 	log.Println("Starting server on :" + port)
