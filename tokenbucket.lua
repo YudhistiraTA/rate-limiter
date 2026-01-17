@@ -2,7 +2,8 @@ local key = KEYS[1] -- token bucket key
 local capacity = tonumber(ARGV[1]) -- bucket capacity
 local rate = tonumber(ARGV[2]) -- refill rate (tokens per second)
 local ttl = tonumber(ARGV[3]) -- time to live in seconds
-local now = math.floor(tonumber(redis.call("TIME")[1])) -- current time in seconds
+local now_arr = redis.call("TIME")
+local now = tonumber(now_arr[1]) + tonumber(now_arr[2]) / 1000000 -- current time in seconds
 
 local tokens = capacity -- default to full capacity
 local tokens_str = redis.call("HGET", key, "tokens") -- get current tokens
