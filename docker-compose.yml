@@ -13,8 +13,8 @@ services:
     environment:
       # Required
       - TARGET_URL=http://backend:8000
-      - RATE_LIMITER_CAPACITY=100
-      - RATE_LIMITER_REFILL_RATE=10
+      - RATE_LIMITER_CAPACITY=5
+      - RATE_LIMITER_REFILL_RATE=1
       - RATE_LIMITER_TTL=60
       # Optional / with defaults
       - PORT=8080
